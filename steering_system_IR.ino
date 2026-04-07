@@ -3,25 +3,25 @@
 #include <Servo.h>
 #include <IRremote.hpp>
 
-// Configuração do LCD e Servo
+// LCD and Servo Configuration
 LiquidCrystal_I2C lcd(0x27, 16, 2); 
 Servo myServo;
 
-// Configuração dos Pinos
-const int RECV_PIN = 4;  // Pino conforme sua última atualização
+// Pin Configuration
+const int RECV_PIN = 4;  
 const int servoPin = 9;  
 const int leftLed = 7; 
 const int rightLed = 2;  
 
-// Códigos Hexadecimais do seu Controle
-const uint16_t BOTAO_ESQUERDA = 0x8; 
-const uint16_t BOTAO_DIREITA  = 0x5A;
-const uint16_t BOTAO_FRENTE   = 0x18;
-const uint16_t BOTAO_TRAS     = 0x52;
+// Remote Control Hex Codes
+const uint16_t BUTTON_RIGHT   = 0x8; 
+const uint16_t BUTTON_LEFT    = 0x5A;
+const uint16_t BUTTON_FORWARD = 0x18;
+const uint16_t BUTTON_BACK    = 0x52;
 
-// Variáveis de Controle
-int angle = 90;            // Inicia em 90 (Reto)
-const int stepSize = 180;  // Vai para o extremo com 1 clique
+// Control Variables
+int angle = 90;            // Starts at 90 (Straight)
+const int stepSize = 180;  // Goes to the extreme with 1 click
 
 unsigned long previousTime = 0;
 const int blinkInterval = 300;
@@ -29,7 +29,7 @@ const int blinkInterval = 300;
 void setup() {
   Serial.begin(9600);
   lcd.init();          
-  lcd.backlight();     
+  lcd.backlight();    
   
   myServo.attach(servoPin);
   
@@ -47,25 +47,25 @@ void setup() {
 void loop() {
   
   // ==========================================
-  // 1. LEITURA DO CONTROLE IR
+  // 1. IR REMOTE READING
   // ==========================================
   if (IrReceiver.decode()) {
     uint16_t command = IrReceiver.decodedIRData.command;
     
-    Serial.print("Comando recebido: 0x");
+    Serial.print("Command received: 0x");
     Serial.println(command, HEX);
 
-    if (command == BOTAO_ESQUERDA) {
-      angle -= stepSize; // Vai para 0
+    if (command == BUTTON_RIGHT) {
+      angle -= stepSize; // Goes to 0
     } 
-    else if (command == BOTAO_DIREITA) {
-      angle += stepSize; // Vai para 180
+    else if (command == BUTTON_LEFT) {
+      angle += stepSize; // Goes to 180
     }
-    else if (command == BOTAO_FRENTE || command == BOTAO_TRAS) {
-      angle = 90;        // <-- DETERMINA 90 GRAUS (Reto)
+    else if (command == BUTTON_FORWARD || command == BUTTON_BACK) {
+      angle = 90;        // Sets to 90 degrees (Straight)
     }
     
-    // Garante que o valor fique entre 0 e 180
+    // Ensures the value stays between 0 and 180
     angle = constrain(angle, 0, 180);
     
     myServo.write(angle);
@@ -73,7 +73,7 @@ void loop() {
   }
 
   // ==========================================
-  // 2. ATUALIZAÇÃO DO LCD
+  // 2. LCD UPDATE
   // ==========================================
   lcd.setCursor(0, 1);
   lcd.print("Angle: ");
@@ -81,23 +81,23 @@ void loop() {
   lcd.print("   "); 
 
   // ==========================================
-  // 3. LÓGICA DOS LEDS (Sem Delay)
+  // 3. LED LOGIC (Non-blocking)
   // ==========================================
   unsigned long currentTime = millis();
   if (currentTime - previousTime >= blinkInterval) {
     previousTime = currentTime;
     
-    // Se estiver virado para a esquerda (Ângulo baixo)
+    // If turned left (Low angle)
     if (angle < 84) {
-      digitalWrite(rightLed, !digitalRead(rightLed)); // Pisca o LED da esquerda
-      digitalWrite(leftLed, HIGH);                // Mantém o outro aceso ou apagado conforme desejar
+      digitalWrite(rightLed, !digitalRead(rightLed)); // Blinks the left LED
+      digitalWrite(leftLed, HIGH);                    // Keeps the other one steady
     } 
-    // Se estiver virado para a direita (Ângulo alto)
+    // If turned right (High angle)
     else if (angle > 95) {
-      digitalWrite(leftLed, !digitalRead(leftLed)); // Pisca o LED da direita
+      digitalWrite(leftLed, !digitalRead(leftLed));   // Blinks the right LED
       digitalWrite(rightLed, HIGH);
     } 
-    // Se estiver reto (90 graus)
+    // If straight (90 degrees)
     else {
       digitalWrite(leftLed, HIGH);
       digitalWrite(rightLed, HIGH);
